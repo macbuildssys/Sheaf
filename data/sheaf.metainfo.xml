@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>sheaf</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Sheaf</name>
+  <developer id="io.github.macbuildssys"><name>macbuildssys</name></developer>
+  <summary>Browse and search your recent and favorite files</summary>
+  <description>
+    <p>Sheaf keeps the files you recently opened, and the ones you marked as favorites, in one place. It handles documents, PDFs, books, pictures, audio, video and everything else, with thumbnails, tags, groups and fast search.</p>
+    <p>It reads the standard recent files list that other applications already write, so there is nothing to set up.</p>
+  </description>
+  <launchable type="desktop-id">sheaf.desktop</launchable>
+  <provides>
+    <binary>sheaf</binary>
+  </provides>
+  <categories>
+    <category>Office</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.0.1" date="2026-11-18"/>
+  </releases>
+</component>

@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --buildsystem=cmake+ninja
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DCMAKE_BUILD_TYPE=Release -DSHEAF_BUILD_TESTS=ON
+
+override_dh_auto_test:
+	QT_QPA_PLATFORM=offscreen XDG_RUNTIME_DIR=$(CURDIR)/debian/.runtime dh_auto_test
+
+execute_before_dh_auto_test:
+	mkdir -p $(CURDIR)/debian/.runtime
+	chmod 700 $(CURDIR)/debian/.runtime
+
+execute_after_dh_auto_clean:
+	rm -rf $(CURDIR)/debian/.runtime
+
+# Some releases name the Qt libraries with a t64 suffix and some do not, so accept both
+override_dh_shlibdeps:
+	dh_shlibdeps
+	sed -i -E 's/(libqt6[a-z0-9]+6)t64 \(([^)]*)\)/\1t64 (\2) | \1 (\2)/g' debian/sheaf.substvars

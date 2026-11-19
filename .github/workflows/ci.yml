@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["debian:13", "ubuntu:24.04"]
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake ninja-build pkg-config \
+            qt6-base-dev libqt6sql6-sqlite libqt6svg6 libglib2.0-dev xdg-utils \
+            debhelper devscripts desktop-file-utils appstream lintian fakeroot
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: |
+          mkdir -p /tmp/runtime && chmod 700 /tmp/runtime
+          XDG_RUNTIME_DIR=/tmp/runtime QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure
+      - name: Validate desktop file
+        run: desktop-file-validate data/sheaf.desktop
+      - name: Build package
+        run: DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -uc -b
+      - name: Lint package
+        run: lintian --fail-on error --suppress-tags bad-distribution-in-changes-file ../sheaf_*_amd64.changes
+      - name: Collect package
+        run: cp ../sheaf_*_amd64.deb .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ strategy.job-index }}
+          path: sheaf_*_amd64.deb
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    container: debian:13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake ninja-build pkg-config \
+            qt6-base-dev libqt6sql6-sqlite libqt6svg6 libglib2.0-dev xdg-utils
+      - name: Build with sanitizers
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build
+      - name: Test
+        run: |
+          mkdir -p /tmp/runtime && chmod 700 /tmp/runtime
+          ASAN_OPTIONS=detect_leaks=0 XDG_RUNTIME_DIR=/tmp/runtime QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure

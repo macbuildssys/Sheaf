@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Name=Sheaf
+GenericName=File Library
+Comment=Browse and search your recent and favorite files
+Exec=sheaf
+Icon=sheaf
+Terminal=false
+Categories=Office;Qt;
+Keywords=recent;favorites;files;documents;pictures;library;
+StartupNotify=true
+StartupWMClass=sheaf
+Actions=quick;
+
+[Desktop Action quick]
+Name=Quick Open
+Exec=sheaf --quick

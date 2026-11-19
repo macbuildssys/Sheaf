@@ -1,0 +1,5 @@
+#pragma once
+
+#define SHEAF_VERSION "@PROJECT_VERSION@"
+#define SHEAF_APP_NAME "Sheaf"
+#define SHEAF_HAVE_GIO_CONFIG @SHEAF_HAVE_GIO_INT@

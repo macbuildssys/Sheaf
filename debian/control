@@ -1,0 +1,32 @@
+Source: sheaf
+Section: utils
+Priority: optional
+Maintainer: macbuildssys <222581142+macbuildssys@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13),
+ cmake (>= 3.16),
+ ninja-build,
+ pkg-config,
+ qt6-base-dev (>= 6.2),
+ libqt6sql6-sqlite,
+ libglib2.0-dev,
+ desktop-file-utils,
+ appstream
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+
+Package: sheaf
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libqt6sql6-sqlite, libqt6svg6, xdg-utils
+Recommends: shared-mime-info, libglib2.0-bin
+Suggests: gvfs, xreader, poppler-utils, ffmpegthumbnailer
+Description: library for your recent and favorite files
+ Sheaf shows the files you opened recently and the ones you marked as
+ favorites, whether they are documents, PDFs, books, pictures, audio or video,
+ with thumbnails, tags, groups and fast search. It reads the standard recent
+ files list that other applications already write, so there is nothing to
+ set up.
+ .
+ It works on any desktop that follows the freedesktop standards, including
+ GNOME, KDE Plasma, Xfce and Cinnamon. There is also a command line tool and a
+ quick open popup, and it can import favorites and groups from Linux Mint
+ Thingy.

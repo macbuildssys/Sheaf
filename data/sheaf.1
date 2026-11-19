@@ -1,0 +1,66 @@
+.TH SHEAF 1 "November 2026" "sheaf 0.0.1" "User Commands"
+.SH NAME
+sheaf \- library of recent and favorite files
+.SH SYNOPSIS
+.B sheaf
+[\fB\-\-quick\fR]
+.br
+.B sheaf
+\fIcommand\fR [\fIarguments\fR]
+.SH DESCRIPTION
+Sheaf shows the files you recently opened and the ones you marked as favorites. With no command it starts the window.
+.SH OPTIONS
+.TP
+.B \-\-quick
+Show only the quick open popup.
+.TP
+.B \-\-help
+Show help.
+.TP
+.B \-\-version
+Show the version.
+.SH COMMANDS
+.TP
+.B list, search \fR[\fIquery\fR]
+List files that match the query.
+.TP
+.B open \fIpath\fR
+Open a file.
+.TP
+.B favorite add|remove|list
+Manage favorites.
+.TP
+.B tag add|remove|list
+Manage tags.
+.TP
+.B forget \fIpath\fR
+Remove a file from the library.
+.TP
+.B clear\-recent \-\-yes
+Clear the recent files list.
+.TP
+.B clean \fR[\-\-dry\-run]
+Forget files that no longer exist.
+.TP
+.B groups
+List the groups.
+.TP
+.B paths
+Show where Sheaf keeps its files.
+.TP
+.B import\-thingy
+Import favorites and groups from Thingy.
+.TP
+.B export, import
+Write or read the library as a JSON file.
+.SH SEARCH
+Free words, "quoted phrases", \-excluded words, tag:name, type:pdf, in:folder, is:fav and is:missing.
+.SH FILES
+.TP
+.I ~/.local/share/sheaf/library.db
+Favorites, tags and history.
+.TP
+.I ~/.config/sheaf/
+Settings and groups.
+.SH LICENSE
+MIT
