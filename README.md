@@ -22,9 +22,9 @@ Sheaf is a library for the files you recently opened and the ones you marked as 
 
 Download the `.deb` and install it:
 
-    sudo apt install ./sheaf_0.0.1_amd64.deb 
+    sudo apt install ./sheaf_amd64.deb 
     or
-    sudo apt install sheaf_0.0.1_amd64.deb
+    sudo apt install sheaf__amd64.deb
 
 Sheaf needs Qt 6.2 or newer. That means Debian 13, Ubuntu 24.04, Kubuntu 24.04, Kali and newer releases. Older releases that only ship Qt 5 are not supported.
 
