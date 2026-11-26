@@ -5,19 +5,22 @@ on:
   pull_request:
 
 jobs:
+  # Build once on the oldest supported system (Ubuntu 24.04, Qt 6.4).
+  # A package built against an older Qt 6 also runs on newer Qt 6,
+  # so this single .deb covers Ubuntu 24.04, 26.04, Linux Mint 22,
+  # Debian 13 and LMDE 7. Linux Mint 23 is built on Ubuntu 26.04,
+  # so the ubuntu:26.04 test covers it.
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        image: ["debian:13", "ubuntu:24.04"]
-    container: ${{ matrix.image }}
+    container: ubuntu:24.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install build tools
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake ninja-build pkg-config \
+          apt-get install -y build-essential cmake ninja-build pkg-config \
             qt6-base-dev libqt6sql6-sqlite libqt6svg6 libglib2.0-dev xdg-utils \
             debhelper devscripts desktop-file-utils appstream lintian fakeroot
       - name: Configure
@@ -36,20 +39,53 @@ jobs:
         run: lintian --fail-on error --suppress-tags bad-distribution-in-changes-file ../sheaf_*_amd64.changes
       - name: Collect package
         run: cp ../sheaf_*_amd64.deb .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
-          name: deb-${{ strategy.job-index }}
+          name: sheaf-deb
           path: sheaf_*_amd64.deb
+
+  # Install the one package on every supported system and check
+  # that the program can find all the libraries it needs.
+  install-test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - "debian:13"
+          - "ubuntu:24.04"
+          - "ubuntu:26.04"
+          - "linuxmintd/mint22.3-amd64"
+    container: ${{ matrix.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: sheaf-deb
+      - name: Install package
+        run: |
+          apt-get update
+          apt-get install -y ./sheaf_*_amd64.deb
+      - name: Check libraries
+        run: |
+          if ldd /usr/bin/sheaf | grep "not found"; then
+            echo "Missing libraries on ${{ matrix.image }}"
+            exit 1
+          fi
 
   sanitizers:
     runs-on: ubuntu-latest
     container: debian:13
+    env:
+      DEBIAN_FRONTEND: noninteractive
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install build tools
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake ninja-build pkg-config \
+          apt-get install -y build-essential cmake ninja-build pkg-config \
             qt6-base-dev libqt6sql6-sqlite libqt6svg6 libglib2.0-dev xdg-utils
       - name: Build with sanitizers
         run: |
@@ -61,3 +97,37 @@ jobs:
         run: |
           mkdir -p /tmp/runtime && chmod 700 /tmp/runtime
           ASAN_OPTIONS=detect_leaks=0 XDG_RUNTIME_DIR=/tmp/runtime QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure
+
+  # Runs only when a version tag such as v0.0.2 is pushed, and only
+  # after every build, install and sanitizer check has passed.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, install-test, sanitizers]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: sheaf-deb
+      - name: Make checksum file
+        run: sha256sum sheaf_*_amd64.deb > SHA256SUMS
+      - name: Sign build record
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: sheaf_*_amd64.deb
+      - name: Publish release
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" sheaf_*_amd64.deb SHA256SUMS --clobber
+          else
+            gh release create "$TAG" sheaf_*_amd64.deb SHA256SUMS \
+              --title "Sheaf $TAG" --generate-notes --verify-tag
+          fi
+          
